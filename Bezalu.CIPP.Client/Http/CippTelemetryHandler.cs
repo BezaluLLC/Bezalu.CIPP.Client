@@ -144,14 +144,35 @@ namespace Bezalu.CIPP.Client.Http
 
             try
             {
-                var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                if (string.IsNullOrWhiteSpace(body))
+                // Read at most MaxErrorBodyLength characters from the stream so large error payloads
+                // (HTML error pages, verbose JSON) never allocate the full body during failure storms.
+                var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+                await using (stream.ConfigureAwait(false))
                 {
-                    return null;
-                }
+                    using var reader = new StreamReader(stream);
+                    var buffer = new char[MaxErrorBodyLength];
+                    var totalRead = 0;
+                    while (totalRead < MaxErrorBodyLength)
+                    {
+                        var read = await reader
+                            .ReadAsync(buffer.AsMemory(totalRead, MaxErrorBodyLength - totalRead), cancellationToken)
+                            .ConfigureAwait(false);
+                        if (read == 0)
+                        {
+                            break;
+                        }
 
-                body = body.Trim();
-                return body.Length <= MaxErrorBodyLength ? body : body[..MaxErrorBodyLength];
+                        totalRead += read;
+                    }
+
+                    if (totalRead == 0)
+                    {
+                        return null;
+                    }
+
+                    var snippet = new string(buffer, 0, totalRead).Trim();
+                    return snippet.Length == 0 ? null : snippet;
+                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
