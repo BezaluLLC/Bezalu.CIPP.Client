@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 
 		<PackageId>Bezalu.CIPP.Client</PackageId>
-		<Version>10.5.0</Version>
+		<Version>10.5.0.1</Version>
 		<Authors>BezaluLLC</Authors>
 		<Description>Generated .NET client for the CIPP API</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
