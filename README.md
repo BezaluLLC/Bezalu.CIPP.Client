@@ -60,7 +60,7 @@ If you already have a bearer token, the `CIPPClient.Create` factory wires up the
 using Bezalu.CIPP.Client;
 
 var client = CIPPClient.Create(
-    "https://your-cipp-instance.azurewebsites.net/api",
+    "https://your-cipp-instance.azurewebsites.net",
     accessToken);
 
 var pong = await client.Api.PublicPing.GetAsync();
