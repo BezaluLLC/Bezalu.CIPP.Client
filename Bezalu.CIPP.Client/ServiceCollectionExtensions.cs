@@ -2,7 +2,6 @@ using Azure.Core;
 using Bezalu.CIPP.Client.Authentication;
 using Bezalu.CIPP.Client.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Http.HttpClientLibrary;
