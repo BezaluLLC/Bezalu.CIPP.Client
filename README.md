@@ -52,6 +52,22 @@ The SDK depends on [`Microsoft.Kiota.Bundle`](https://www.nuget.org/packages/Mic
 
 A `CIPPClient` is constructed from an `IRequestAdapter`. The adapter pairs an authentication provider with an `HttpClient`, and points at your CIPP API base URL.
 
+### Quick start (bearer token)
+
+If you already have a bearer token, the `CIPPClient.Create` factory wires up the access token provider, authentication provider, and request adapter for you:
+
+```csharp
+using Bezalu.CIPP.Client;
+
+var client = CIPPClient.Create(
+    "https://your-cipp-instance.azurewebsites.net",
+    accessToken);
+
+var pong = await client.Api.PublicPing.GetAsync();
+```
+
+Pass your own `HttpClient` as the optional third argument when you need custom transport (proxies, retries, logging). For token refresh or `Azure.Identity` scenarios, construct the adapter manually as shown below.
+
 ### Authenticated client
 
 CIPP authenticates through a Microsoft Entra app registration. Acquire a bearer token for the CIPP API scope (see the [Setup & Authentication](https://docs.cipp.app/api-documentation/setup-and-authentication) guide), then supply it through an access token provider:
