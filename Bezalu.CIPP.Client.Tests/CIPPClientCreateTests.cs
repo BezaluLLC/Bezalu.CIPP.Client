@@ -4,7 +4,7 @@ namespace Bezalu.CIPP.Client.Tests
 {
     public class CIPPClientCreateTests
     {
-        private const string BaseUrl = "https://contoso.example.com/api";
+        private const string BaseUrl = "https://contoso.example.com";
         private const string AccessToken = "my-access-token";
 
         [Fact]
@@ -21,6 +21,9 @@ namespace Bezalu.CIPP.Client.Tests
             var client = CIPPClient.Create(BaseUrl, AccessToken);
 
             Assert.NotNull(client.Api);
+
+            var requestInfo = client.Api.PublicPing.ToGetRequestInformation();
+            Assert.Equal($"{BaseUrl}/api/PublicPing", requestInfo.URI.ToString());
         }
 
         [Fact]
