@@ -76,16 +76,16 @@ namespace Bezalu.CIPP.Client
         /// <param name="httpClient">Optional pre-configured <see cref="HttpClient"/>. When supplied, the caller owns the transport pipeline and the built-in resilience/telemetry handlers are not added.</param>
         /// <param name="loggerFactory">Optional logger factory used by the telemetry handler when the default transport is created.</param>
         /// <returns>A ready-to-use <see cref="CIPPClient"/>.</returns>
-        /// <exception cref="ArgumentException">Thrown when <paramref name="baseUrl"/> is null or whitespace.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="baseUrl"/> is null, whitespace, or not an absolute HTTP/HTTPS URI.</exception>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="authenticationProvider"/> is null.</exception>
         public static CIPPClient Create(string baseUrl, IAuthenticationProvider authenticationProvider, HttpClient? httpClient = null, ILoggerFactory? loggerFactory = null)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(baseUrl);
             ArgumentNullException.ThrowIfNull(authenticationProvider);
+            var normalizedBaseUrl = NormalizeBaseUrl(baseUrl);
 
             var adapter = new HttpClientRequestAdapter(authenticationProvider, httpClient: httpClient ?? CreateDefaultHttpClient(loggerFactory))
             {
-                BaseUrl = baseUrl.TrimEnd('/')
+                BaseUrl = normalizedBaseUrl
             };
             return new CIPPClient(adapter);
         }
@@ -102,9 +102,30 @@ namespace Bezalu.CIPP.Client
         }
 
         /// <summary>
+        /// Validates and normalizes the CIPP base URL: trims surrounding whitespace, requires an absolute
+        /// HTTP/HTTPS URI, and removes any trailing slash so Kiota can compose request URIs reliably.
+        /// </summary>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="baseUrl"/> is null, whitespace, or not an absolute HTTP/HTTPS URI.</exception>
+        private static string NormalizeBaseUrl(string baseUrl)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(baseUrl);
+
+            var trimmed = baseUrl.Trim();
+            if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                throw new ArgumentException(
+                    "Base URL must be an absolute HTTP or HTTPS URI (e.g., https://your-cipp-instance.azurewebsites.net).",
+                    nameof(baseUrl));
+            }
+
+            return trimmed.TrimEnd('/');
+        }
+
+        /// <summary>
         /// Restricts the bearer token to the CIPP host so it cannot leak to unexpected destinations.
         /// </summary>
         internal static IEnumerable<string>? GetAllowedHosts(string baseUrl)
-            => Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri) ? [uri.Host] : null;
+            => Uri.TryCreate(baseUrl?.Trim(), UriKind.Absolute, out var uri) ? [uri.Host] : null;
     }
 }

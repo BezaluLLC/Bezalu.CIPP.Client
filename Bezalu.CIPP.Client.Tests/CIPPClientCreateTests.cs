@@ -49,6 +49,24 @@ namespace Bezalu.CIPP.Client.Tests
         }
 
         [Theory]
+        [InlineData("not-a-url")]
+        [InlineData("/relative/path")]
+        [InlineData("ftp://contoso.example.com")]
+        public void CreateThrowsWhenBaseUrlIsNotAbsoluteHttp(string baseUrl)
+        {
+            Assert.Throws<ArgumentException>(() => CIPPClient.Create(baseUrl, AccessToken));
+        }
+
+        [Fact]
+        public void CreateTrimsWhitespaceFromBaseUrl()
+        {
+            var client = CIPPClient.Create($"  {BaseUrl}/  ", AccessToken);
+
+            var requestInfo = client.Api.PublicPing.ToGetRequestInformation();
+            Assert.Equal($"{BaseUrl}/api/PublicPing", requestInfo.URI.ToString());
+        }
+
+        [Theory]
         [InlineData(null)]
         [InlineData("")]
         [InlineData("   ")]
